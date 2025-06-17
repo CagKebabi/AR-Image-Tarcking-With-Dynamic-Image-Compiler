@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Image Tracking Dynamic Compiler</title>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.3/dist/mindar-image.prod.js" type="module"></script>
+    <script src="/script.js" type="module" defer></script>
+    <script data-consolejs-channel="df6343dc-578b-729d-204f-7c4ffd99c544" src="https://remotejs.com/agent/agent.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html, body {
+        position: relative;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+        font-family: Verdana, Geneva, Tahoma, sans-serif;
+      }
+      .upload-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: rgba(0, 0, 0, 0.8);
+        z-index: 1000;
+      }
+
+      .upload-box {
+        background-color: white;
+        padding: 2rem;
+        border-radius: 10px;
+        text-align: center;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+      }
+
+      .upload-box h2 {
+        margin-bottom: 1rem;
+        color: #333;
+      }
+
+      .info-text {
+        font-size: 0.9rem;
+        color: #666;
+        margin-bottom: 1.5rem;
+        line-height: 1.6;
+        text-align: center;
+      }
+
+      .info-text small {
+        color: #999;
+      }
+
+      .progress {
+        width: 100%;
+        height: 20px;
+        background-color: #f0f0f0;
+        border-radius: 10px;
+        margin: 1rem 0;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .progress-bar {
+        width: 0%;
+        height: 100%;
+        background-color: #1b2a47;
+        transition: width 0.3s ease;
+      }
+
+      .progress-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: #b9b9b9;
+        font-size: 0.8rem;
+        font-weight: bold;
+      }
+
+      .info-text a {
+        color: #1b2a47;
+        text-decoration: none;
+        font-weight: bold;
+      }
+
+      .info-text a:hover {
+        text-decoration: underline;
+      }
+
+      .upload-box input[type="file"] {
+        margin-bottom: 1rem;
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+
+      #uploadButton {
+        background-color: #1b2a47;
+        color: white;
+        border: none;
+        padding: 0.8rem 1.5rem;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        margin-top: 1rem;
+      }
+
+      #uploadButton:hover {
+        background-color: #2c4270;
+      }
+
+      #loadingIndicator {
+        color: #1b2a47;
+        text-align: center;
+        margin-top: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="upload-container" id="uploadContainer">
+      <div class="upload-box">
+        <h2>Resim Yükle</h2>
+        <p class="info-text">
+          Resminizi yükleyin ve otomatik olarak AR'da görüntüleyin.<br>
+          <small>(Önerilen: Yüksek kontrastlı, detaylı resimler)</small>
+        </p>
+        <input type="file" id="imageUpload" accept="image/*" />
+        <div class="progress" id="compileProgress" style="display: none;">
+          <div class="progress-bar" id="progressBar"></div>
+          <div class="progress-text" id="progressText">%0</div>
+        </div>
+        <div id="loadingIndicator" style="display: none;">
+          <p>Resim işleniyor...</p>
+        </div>
+        <button id="uploadButton">Yükle ve AR'ı Başlat</button>
+      </div>
+    </div>
+
+    <div id="arContainer" style="display: none;">
+      <!-- AR görüntüsü burada gösterilecek -->
+    </div>
+  </body>
+</html>
+
+
+
+
+
+

@@ -1,0 +1,22 @@
+{
+  "name": "mindar-dynamic-compiler",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-basic-ssl": "^1.2.0",
+    "vite": "^6.3.5",
+    "vite-plugin-mkcert": "^1.17.6",
+    "vite-plugin-restart": "^0.4.1"
+  },
+  "dependencies": {
+    "gsap": "^3.12.7",
+    "mind-ar": "^1.2.5",
+    "three": "^0.173.0"
+  }
+}
