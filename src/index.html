@@ -129,12 +129,20 @@
   <body>
     <div class="upload-container" id="uploadContainer">
       <div class="upload-box">
-        <h2>Resim Yükle</h2>
+        <h2>Resim ve Model Yükle</h2>
         <p class="info-text">
-          Resminizi yükleyin ve otomatik olarak AR'da görüntüleyin.<br>
-          <small>(Önerilen: Yüksek kontrastlı, detaylı resimler)</small>
+          Resminizi ve 3D modelinizi yükleyin ve otomatik olarak AR'da görüntüleyin.<br>
+          <small>(Önerilen: Yüksek kontrastlı, detaylı resimler ve GLB formatında 3D model)</small>
         </p>
-        <input type="file" id="imageUpload" accept="image/*" />
+        <div style="margin-bottom: 15px;">
+          <label for="imageUpload">Resim Seçin:</label>
+          <input type="file" id="imageUpload" accept="image/*" />
+        </div>
+        <div style="margin-bottom: 15px;">
+          <label for="modelUpload">3D Model Seçin (GLB):</label>
+          <input type="file" id="modelUpload" accept=".glb" />
+          <small style="display: block; margin-top: 5px; color: #666;">Model seçilmezse varsayılan model kullanılacaktır</small>
+        </div>
         <div class="progress" id="compileProgress" style="display: none;">
           <div class="progress-bar" id="progressBar"></div>
           <div class="progress-text" id="progressText">%0</div>

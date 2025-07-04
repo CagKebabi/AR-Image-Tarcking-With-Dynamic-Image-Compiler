@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { MindARThree } from "mind-ar/dist/mindar-image-three.prod.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import glbModel from "./assets/targets/model.glb?url";
+import defaultGlbModel from "./assets/targets/model.glb?url";
 
 let currentMindarInstance = null;
 let compiler = null;
@@ -11,6 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const uploadContainer = document.getElementById("uploadContainer");
   const arContainer = document.getElementById("arContainer");
   const imageUpload = document.getElementById("imageUpload");
+  const modelUpload = document.getElementById("modelUpload");
   const uploadButton = document.getElementById("uploadButton");
   const loadingIndicator = document.getElementById("loadingIndicator");
   const compileProgress = document.getElementById("compileProgress");
@@ -28,6 +29,15 @@ document.addEventListener("DOMContentLoaded", () => {
       img.onerror = reject;
       img.src = URL.createObjectURL(file);
     });
+  };
+  
+  // 3D modeli yükle
+  const loadModel = async (file) => {
+    if (!file) {
+      // Eğer dosya seçilmediyse varsayılan modeli kullan
+      return defaultGlbModel;
+    }
+    return URL.createObjectURL(file);
   };
 
   // Yükleme butonuna tıklama olayı ekle
@@ -50,6 +60,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Resmi yükle
       const image = await loadImage(file);
+      
+      // Modeli yükle (eğer seçilmişse)
+      const modelFile = modelUpload.files[0];
+      const modelUrl = await loadModel(modelFile);
 
       // Resmi derle
       const dataList = await compiler.compileImageTargets([image], (progress) => {
@@ -66,7 +80,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const mindUrl = URL.createObjectURL(mindBlob);
 
       // AR'ı başlat
-      await startAR(mindUrl);
+      await startAR(mindUrl, modelUrl);
 
       // Yükleme ekranını gizle ve AR container'ı göster
       uploadContainer.style.display = "none";
@@ -83,7 +97,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  const startAR = async (mindTargetSource) => {
+  const startAR = async (mindTargetSource, modelSource) => {
     try {
       // Kamera API'sinin varlığını kontrol et
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -155,27 +169,21 @@ document.addEventListener("DOMContentLoaded", () => {
       // Model
       let model_mixer;
       const loader = new GLTFLoader();
-      const model = await loader.loadAsync(glbModel, (xhr) => {
-        // const yuzde = Math.round((xhr.loaded / xhr.total) * 100);
-        // console.log(`3D Model Yükleniyor: %${yuzde}`);
-        // document.getElementById(
-        //   "progressContainer"
-        // ).innerText = `Yükleniyor: %${yuzde}`;
-        // if (yuzde === 100) {
-        //   console.log("3D Model yükleme tamamlandı! 🚀");
-        //   document.getElementById("touchToScreenContent").style.display =
-        //     "block";
-        //   document.getElementById("progressContainer").style.display = "none";
-        // }
+      const model = await loader.loadAsync(modelSource, (xhr) => {
+        if (xhr.lengthComputable) {
+          const yuzde = Math.round((xhr.loaded / xhr.total) * 100);
+          console.log(`3D Model Yükleniyor: %${yuzde}`);
+        }
       });
 
+      // Model ölçeği ve pozisyonunu ayarla
       model.scene.scale.set(0.5, 0.5, 0.5);
-      model.scene.position.set(-0.6, -0.35, -0.1);
+      model.scene.position.set(0, 0, 0); // Merkeze konumlandır
 
-      // Setup animation mixer
-      model_mixer = new THREE.AnimationMixer(model.scene);
-      const modelAction = model_mixer.clipAction(model.animations[0]);
-      modelAction.play();
+      // // Setup animation mixer
+      // model_mixer = new THREE.AnimationMixer(model.scene);
+      // const modelAction = model_mixer.clipAction(model.animations[0]);
+      // modelAction.play();
 
       // Modelleri anchor'a ekle
       const anchor = mindarThree.addAnchor(0);
