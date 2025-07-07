@@ -7,6 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.3/dist/mindar-image.prod.js" type="module"></script>
     <script src="/script.js" type="module" defer></script>
     <script data-consolejs-channel="df6343dc-578b-729d-204f-7c4ffd99c544" src="https://remotejs.com/agent/agent.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/dropzone@6.0.0-beta.2/dist/dropzone.css" />
     <style>
       * {
         margin: 0;
@@ -40,6 +41,8 @@
         border-radius: 10px;
         text-align: center;
         box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+        width: 90%;
+        max-width: 500px;
       }
 
       .upload-box h2 {
@@ -96,14 +99,6 @@
         text-decoration: underline;
       }
 
-      .upload-box input[type="file"] {
-        margin-bottom: 1rem;
-        width: 100%;
-        padding: 0.5rem;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-      }
-
       #uploadButton {
         background-color: #1b2a47;
         color: white;
@@ -113,16 +108,67 @@
         cursor: pointer;
         transition: background-color 0.3s;
         margin-top: 1rem;
+        width: 100%;
       }
 
       #uploadButton:hover {
         background-color: #2c4270;
       }
 
+      #uploadButton:disabled {
+        background-color: #cccccc;
+        cursor: not-allowed;
+      }
+
       #loadingIndicator {
         color: #1b2a47;
         text-align: center;
         margin-top: 1rem;
+      }
+      
+      /* Dropzone özel stilleri */
+      .dropzone {
+        border: 2px dashed #1b2a47;
+        border-radius: 5px;
+        background: #f9f9f9;
+        margin-bottom: 15px;
+        min-height: 120px;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+      
+      .dropzone:hover {
+        background: #f0f0f0;
+      }
+      
+      .dropzone .dz-message {
+        margin: 1em 0;
+      }
+      
+      .dropzone .dz-preview .dz-image {
+        border-radius: 8px;
+      }
+      
+      .dropzone-container {
+        margin-bottom: 20px;
+      }
+      
+      .dropzone-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+        color: #333;
+        text-align: left;
+      }
+      
+      .dropzone-hint {
+        display: block;
+        margin-top: 5px;
+        color: #666;
+        font-size: 0.8rem;
+        text-align: left;
       }
     </style>
   </head>
@@ -134,15 +180,19 @@
           Resminizi ve 3D modelinizi yükleyin ve otomatik olarak AR'da görüntüleyin.<br>
           <small>(Önerilen: Yüksek kontrastlı, detaylı resimler ve GLB formatında 3D model)</small>
         </p>
-        <div style="margin-bottom: 15px;">
-          <label for="imageUpload">Resim Seçin:</label>
-          <input type="file" id="imageUpload" accept="image/*" />
+        
+        <div class="dropzone-container">
+          <label class="dropzone-label">Resim Seçin:</label>
+          <div id="imageDropzone" class="dropzone"></div>
+          <span class="dropzone-hint">Resim dosyasını sürükleyip bırakın veya tıklayarak seçin</span>
         </div>
-        <div style="margin-bottom: 15px;">
-          <label for="modelUpload">3D Model Seçin (GLB):</label>
-          <input type="file" id="modelUpload" accept=".glb" />
-          <small style="display: block; margin-top: 5px; color: #666;">Model seçilmezse varsayılan model kullanılacaktır</small>
+        
+        <div class="dropzone-container">
+          <label class="dropzone-label">3D Model Seçin (GLB):</label>
+          <div id="modelDropzone" class="dropzone"></div>
+          <span class="dropzone-hint">Model seçilmezse varsayılan model kullanılacaktır</span>
         </div>
+        
         <div class="progress" id="compileProgress" style="display: none;">
           <div class="progress-bar" id="progressBar"></div>
           <div class="progress-text" id="progressText">%0</div>
@@ -159,9 +209,3 @@
     </div>
   </body>
 </html>
-
-
-
-
-
-

@@ -2,24 +2,93 @@ import * as THREE from "three";
 import { MindARThree } from "mind-ar/dist/mindar-image-three.prod.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import defaultGlbModel from "./assets/targets/model.glb?url";
+import Dropzone from "dropzone";
+
+// Dropzone'un otomatik keşfetme özelliğini devre dışı bırak
+Dropzone.autoDiscover = false;
 
 let currentMindarInstance = null;
 let compiler = null;
+let imageFile = null;
+let modelFile = null;
 
 document.addEventListener("DOMContentLoaded", () => {
   // DOM elementlerini seç
   const uploadContainer = document.getElementById("uploadContainer");
   const arContainer = document.getElementById("arContainer");
-  const imageUpload = document.getElementById("imageUpload");
-  const modelUpload = document.getElementById("modelUpload");
   const uploadButton = document.getElementById("uploadButton");
   const loadingIndicator = document.getElementById("loadingIndicator");
   const compileProgress = document.getElementById("compileProgress");
   const progressBar = document.getElementById("progressBar");
   const progressText = document.getElementById("progressText");
 
+  // Başlangıçta yükleme butonunu devre dışı bırak
+  uploadButton.disabled = true;
+
   // Compiler'ı başlat
   compiler = new window.MINDAR.IMAGE.Compiler();
+
+  // Resim Dropzone'unu başlat
+  const imageDropzone = new Dropzone("#imageDropzone", {
+    url: "/dummy-upload", // Gerçek bir URL'e gerek yok, dosyaları client-side işleyeceğiz
+    acceptedFiles: "image/*",
+    maxFiles: 1,
+    autoProcessQueue: false,
+    addRemoveLinks: true,
+    dictDefaultMessage: "Resim dosyasını buraya sürükleyin veya tıklayarak seçin",
+    dictRemoveFile: "Kaldır",
+    dictCancelUpload: "İptal",
+    dictMaxFilesExceeded: "Sadece bir resim yükleyebilirsiniz",
+  });
+
+  // Model Dropzone'unu başlat
+  const modelDropzone = new Dropzone("#modelDropzone", {
+    url: "/dummy-upload", // Gerçek bir URL'e gerek yok, dosyaları client-side işleyeceğiz
+    acceptedFiles: ".glb",
+    maxFiles: 1,
+    autoProcessQueue: false,
+    addRemoveLinks: true,
+    dictDefaultMessage: "3D model dosyasını (.glb) buraya sürükleyin veya tıklayarak seçin",
+    dictRemoveFile: "Kaldır",
+    dictCancelUpload: "İptal",
+    dictMaxFilesExceeded: "Sadece bir model yükleyebilirsiniz",
+  });
+
+  // Resim yüklendiğinde
+  imageDropzone.on("addedfile", (file) => {
+    // Önceki dosyayı kaldır (eğer varsa)
+    if (imageDropzone.files.length > 1) {
+      imageDropzone.removeFile(imageDropzone.files[0]);
+    }
+    imageFile = file;
+    checkFilesAndEnableButton();
+  });
+
+  // Resim kaldırıldığında
+  imageDropzone.on("removedfile", () => {
+    imageFile = null;
+    checkFilesAndEnableButton();
+  });
+
+  // Model yüklendiğinde
+  modelDropzone.on("addedfile", (file) => {
+    // Önceki dosyayı kaldır (eğer varsa)
+    if (modelDropzone.files.length > 1) {
+      modelDropzone.removeFile(modelDropzone.files[0]);
+    }
+    modelFile = file;
+  });
+
+  // Model kaldırıldığında
+  modelDropzone.on("removedfile", () => {
+    modelFile = null;
+  });
+
+  // Dosya durumunu kontrol et ve butonu etkinleştir/devre dışı bırak
+  const checkFilesAndEnableButton = () => {
+    // En az bir resim dosyası yüklenmiş olmalı
+    uploadButton.disabled = !imageFile;
+  };
 
   // Resmi yükle ve Image nesnesine çevir
   const loadImage = async (file) => {
@@ -42,14 +111,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Yükleme butonuna tıklama olayı ekle
   uploadButton.addEventListener("click", async () => {
-    const file = imageUpload.files[0];
-    if (!file) {
+    if (!imageFile) {
       alert("Lütfen bir resim seçin");
-      return;
-    }
-
-    if (!file.type.startsWith("image/")) {
-      alert("Lütfen geçerli bir resim dosyası seçin");
       return;
     }
 
@@ -59,10 +122,9 @@ document.addEventListener("DOMContentLoaded", () => {
       uploadButton.disabled = true;
 
       // Resmi yükle
-      const image = await loadImage(file);
+      const image = await loadImage(imageFile);
       
       // Modeli yükle (eğer seçilmişse)
-      const modelFile = modelUpload.files[0];
       const modelUrl = await loadModel(modelFile);
 
       // Resmi derle
