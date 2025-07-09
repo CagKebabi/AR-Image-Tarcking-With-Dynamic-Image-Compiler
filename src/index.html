@@ -35,14 +35,23 @@
         z-index: 1000;
       }
 
-      .upload-box {
+      .viewWrapper {
         background-color: white;
         padding: 2rem;
         border-radius: 10px;
         text-align: center;
         box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
         width: 90%;
-        max-width: 500px;
+        /*max-width: 500px;*/
+        display: flex;
+        width: auto;
+        gap: 5rem;
+        align-items: center;
+      }
+
+      .upload-box {
+        
+        
       }
 
       .upload-box h2 {
@@ -174,33 +183,44 @@
   </head>
   <body>
     <div class="upload-container" id="uploadContainer">
-      <div class="upload-box">
-        <h2>Resim ve Model Yükle</h2>
-        <p class="info-text">
-          Resminizi ve 3D modelinizi yükleyin ve otomatik olarak AR'da görüntüleyin.<br>
-          <small>(Önerilen: Yüksek kontrastlı, detaylı resimler ve GLB formatında 3D model)</small>
-        </p>
-        
-        <div class="dropzone-container">
-          <label class="dropzone-label">Resim Seçin:</label>
-          <div id="imageDropzone" class="dropzone"></div>
-          <span class="dropzone-hint">Resim dosyasını sürükleyip bırakın veya tıklayarak seçin</span>
+      <div class="viewWrapper">
+        <div class="upload-box">
+          <h2>Resim ve Model Yükle</h2>
+          <p class="info-text">
+            Resminizi ve 3D modelinizi yükleyin ve otomatik olarak AR'da görüntüleyin.<br>
+            <small>(Önerilen: Yüksek kontrastlı, detaylı resimler ve GLB formatında 3D model)</small>
+          </p>
+          
+          <div class="dropzone-container">
+            <label class="dropzone-label">Resim Seçin:</label>
+            <div id="imageDropzone" class="dropzone"></div>
+            <span class="dropzone-hint">Resim dosyasını sürükleyip bırakın veya tıklayarak seçin</span>
+          </div>
+          
+          <div class="dropzone-container">
+            <label class="dropzone-label">3D Model Seçin (GLB):</label>
+            <div id="modelDropzone" class="dropzone"></div>
+            <span class="dropzone-hint">Model seçilmezse varsayılan model kullanılacaktır</span>
+          </div>
+
+          <div class="dropzone-container">
+            <label class="dropzone-label">Video Seçin:</label>
+            <div id="videoDropzone" class="dropzone"></div>
+            <span class="dropzone-hint">Video dosyasını sürükleyip bırakın veya tıklayarak seçin</span>
+          </div>
+          
+          <div class="progress" id="compileProgress" style="display: none;">
+            <div class="progress-bar" id="progressBar"></div>
+            <div class="progress-text" id="progressText">%0</div>
+          </div>
+          <div id="loadingIndicator" style="display: none;">
+            <p>Resim işleniyor...</p>
+          </div>
+          <button id="uploadButton">Yükle ve AR'ı Başlat</button>
         </div>
-        
-        <div class="dropzone-container">
-          <label class="dropzone-label">3D Model Seçin (GLB):</label>
-          <div id="modelDropzone" class="dropzone"></div>
-          <span class="dropzone-hint">Model seçilmezse varsayılan model kullanılacaktır</span>
+        <div class="view-canvas-container" style="border-radius: 10px; overflow: hidden;">
+          <canvas id="viewCanvas"></canvas>
         </div>
-        
-        <div class="progress" id="compileProgress" style="display: none;">
-          <div class="progress-bar" id="progressBar"></div>
-          <div class="progress-text" id="progressText">%0</div>
-        </div>
-        <div id="loadingIndicator" style="display: none;">
-          <p>Resim işleniyor...</p>
-        </div>
-        <button id="uploadButton">Yükle ve AR'ı Başlat</button>
       </div>
     </div>
 
