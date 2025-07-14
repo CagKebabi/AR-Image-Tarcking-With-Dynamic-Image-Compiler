@@ -23,11 +23,11 @@
         font-family: Verdana, Geneva, Tahoma, sans-serif;
       }
       .upload-container {
-        position: fixed;
+        /* position: fixed;
         top: 0;
-        left: 0;
+        left: 0; */
         width: 100%;
-        height: 100%;
+        height: 100vh;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -37,21 +37,25 @@
 
       .viewWrapper {
         background-color: white;
-        padding: 2rem;
         border-radius: 10px;
         text-align: center;
         box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-        width: 90%;
-        /*max-width: 500px;*/
+        width: 100%;
+        height: 100%;
         display: flex;
-        width: auto;
-        gap: 5rem;
         align-items: center;
       }
 
       .upload-box {
-        
-        
+        height: 100%;
+        overflow-y: scroll;
+        overflow-x: hidden;  
+        padding: 2rem 2rem 2rem 2rem;      
+      }
+      
+      .view-canvas-container {
+        flex-grow: 1;
+        height: 100%;
       }
 
       .upload-box h2 {
@@ -179,6 +183,13 @@
         font-size: 0.8rem;
         text-align: left;
       }
+      
+      .social-media-select {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+      }
     </style>
   </head>
   <body>
@@ -209,6 +220,15 @@
             <span class="dropzone-hint">Video dosyasını sürükleyip bırakın veya tıklayarak seçin</span>
           </div>
           
+          <div class="dropzone-container">
+            <label class="dropzone-label">Sosyal Medya İkonu Seçin:</label>
+            <select id="socialMediaIconSelect" class="social-media-select">
+              <option value="">Seçiniz...</option>
+              <!-- JavaScript ile doldurulacak -->
+            </select>
+            <span class="dropzone-hint">Seçilen ikon 3D sahneye eklenecektir</span>
+          </div>
+          
           <div class="progress" id="compileProgress" style="display: none;">
             <div class="progress-bar" id="progressBar"></div>
             <div class="progress-text" id="progressText">%0</div>
@@ -218,7 +238,7 @@
           </div>
           <button id="uploadButton">Yükle ve AR'ı Başlat</button>
         </div>
-        <div class="view-canvas-container" style="border-radius: 10px; overflow: hidden;">
+        <div class="view-canvas-container">
           <canvas id="viewCanvas"></canvas>
         </div>
       </div>

@@ -16,6 +16,7 @@ let videoFile = null;
 let viewScene, viewCamera, viewRenderer;
 let viewTexture, viewPlane;
 let viewModel = null;
+let socialMediaIconFile = null;
 
 document.addEventListener("DOMContentLoaded", () => {
   // DOM elementlerini seç
@@ -27,6 +28,121 @@ document.addEventListener("DOMContentLoaded", () => {
   const progressBar = document.getElementById("progressBar");
   const progressText = document.getElementById("progressText");
   const viewCanvas = document.getElementById("viewCanvas");
+  const socialMediaIconSelect = document.getElementById("socialMediaIconSelect");
+
+  // Sosyal medya ikonları için modellerin yollarını ve isimlerini tanımla
+  const socialMediaIcons = [
+    { name: "Blender", file: "BlenderLogo2.glb" },
+    { name: "Discord", file: "DiscordLogo2.glb" },
+    { name: "Facebook", file: "FacebookLogo2.glb" },
+    { name: "GitHub", file: "GitHubLogo2.glb" },
+    { name: "Kick", file: "KickLogo2.glb" },
+    { name: "LinkedIn", file: "LinkedinLogo2.glb" },
+    { name: "Mastodon", file: "MastodonLogo2.glb" },
+    { name: "Patreon", file: "PatreonLogo2.glb" },
+    { name: "PayPal", file: "PaypalLogo2.glb" },
+    { name: "Pinterest", file: "PinterestLogo2.glb" },
+    { name: "PlayStation", file: "PstationLogo2.glb" },
+    { name: "Quora", file: "QuoraLogo2.glb" },
+    { name: "Reddit", file: "RedditLogo3.glb" },
+    { name: "Rumble", file: "RumbleLogo2.glb" },
+    { name: "Sketchfab", file: "SketchfabLogo2.glb" },
+    { name: "Snapchat", file: "SnapchatLogo2.glb" },
+    { name: "Spotify", file: "SpotifyLogo2.glb" },
+    { name: "Steam", file: "SteamLogo2.glb" },
+    { name: "Switch", file: "SwchLogo2.glb" },
+    { name: "Telegram", file: "TelegramLogo2.glb" },
+    { name: "TikTok", file: "TikTokLogo2.glb" },
+    { name: "Tumblr", file: "TumblrLogo2.glb" },
+    { name: "Twitch", file: "TwitchLogo2.glb" },
+    { name: "Unity", file: "UnityLogo2.glb" },
+    { name: "Unreal", file: "UnrealLogo3.glb" },
+    { name: "WeChat", file: "WeChatLogo2.glb" },
+    { name: "WhatsApp", file: "WhatsAppLogo2.glb" },
+    { name: "Windows", file: "WindowsLogo3_2.glb" },
+    { name: "X (Twitter)", file: "XTwitterLogo2.glb" },
+    { name: "YouTube", file: "YoutubeLogo2.glb" }
+  ];
+
+  // Sosyal medya ikonları seçme kutusunu doldur
+  const populateSocialMediaIconsDropdown = () => {
+    socialMediaIcons.forEach(icon => {
+      const option = document.createElement("option");
+      option.value = icon.file;
+      option.textContent = icon.name;
+      socialMediaIconSelect.appendChild(option);
+    });
+  };
+
+  // Sosyal medya ikonu seçildiğinde çalışacak fonksiyon
+  const loadSocialMediaIcon = async (iconFileName) => {
+    if (!iconFileName) return;
+    
+    try {
+      // Eğer önceki bir sosyal medya ikonu varsa, kaldır
+      const existingSocialMediaIcon = viewScene.children.find(child => child.userData && child.userData.isSocialMediaIcon);
+      if (existingSocialMediaIcon) {
+        viewScene.remove(existingSocialMediaIcon);
+      }
+      
+      // Sosyal medya ikonu için URL oluştur
+      const iconUrl = `./assets/social-media-icons/${iconFileName}`;
+      
+      // Seçilen sosyal medya ikonunu kaydet (AR deneyiminde kullanmak için)
+      socialMediaIconFile = { name: iconFileName, url: iconUrl };
+      
+      // GLTFLoader ile modeli yükle
+      const loader = new GLTFLoader();
+      loader.load(iconUrl, (gltf) => {
+        // Modeli hazırla
+        const socialMediaIcon = gltf.scene;
+        socialMediaIcon.userData.isSocialMediaIcon = true; // Daha sonra referans için işaretle
+        
+        // Modelin boyutunu ayarla
+        const box = new THREE.Box3().setFromObject(socialMediaIcon);
+        const size = box.getSize(new THREE.Vector3());
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const scale = 0.5 / maxDim; // Modeli uygun boyuta ölçekle
+        
+        //socialMediaIcon.scale.set(scale, scale, scale);
+        
+        // Eğer kullanıcı yüklediği bir model varsa, sosyal medya ikonunu onun yanına yerleştir
+        const existingUserModel = viewScene.children.find(child => child.userData && child.userData.isUserModel);
+        if (existingUserModel) {
+          socialMediaIcon.position.set(0.5, 0, 0); // Modelin sağına yerleştir
+        } else {
+          socialMediaIcon.position.set(0, 0, 0); // Merkeze yerleştir
+        }
+        
+        // Modeli sahneye ekle
+        viewScene.add(socialMediaIcon);
+        
+        // Sahneyi render et
+        renderViewCanvas();
+      }, 
+      // Progress callback
+      (xhr) => {
+        console.log(`Sosyal medya ikonu yükleniyor: ${(xhr.loaded / xhr.total * 100).toFixed(2)}%`);
+      }, 
+      // Error callback
+      (error) => {
+        console.error('Sosyal medya ikonu yüklenirken hata oluştu:', error);
+      });
+    } catch (error) {
+      console.error("Sosyal medya ikonu görüntülenirken hata oluştu:", error);
+    }
+  };
+
+  // Sosyal medya ikonu seçme kutusuna change event listener ekle
+  socialMediaIconSelect.addEventListener("change", (event) => {
+    const selectedIcon = event.target.value;
+    if (selectedIcon) {
+      loadSocialMediaIcon(selectedIcon);
+    }
+  });
+
+  // Sosyal medya ikonları seçme kutusunu doldur
+  populateSocialMediaIconsDropdown();
 
   // Resmi view canvas'ta göster
   const displayImageInViewCanvas = async (file) => {
@@ -56,7 +172,7 @@ document.addEventListener("DOMContentLoaded", () => {
           opacity: 1.0
         });
         viewPlane = new THREE.Mesh(planeGeometry, planeMaterial);
-        //viewPlane.position.z = -0.1; // Plane'i modelin arkasına konumlandır
+        viewPlane.position.z = -0.01; // Plane'i modelin arkasına konumlandır
         viewScene.add(viewPlane);
       } else {
         viewPlane.material.map = viewTexture;
@@ -151,11 +267,10 @@ document.addEventListener("DOMContentLoaded", () => {
           console.log(`Video boyutları: ${video.videoWidth}x${video.videoHeight}, Aspect Ratio: ${videoAspect}`);
           
           const videoTexture = new THREE.VideoTexture(video);
-          videoTexture.colorSpace = THREE.SRGBColorSpace;
           videoTexture.minFilter = THREE.LinearFilter;
           videoTexture.magFilter = THREE.LinearFilter;
-          videoTexture.generateMipmaps = false;
           videoTexture.format = THREE.RGBAFormat;
+          videoTexture.colorSpace = THREE.SRGBColorSpace;
           
           const planeGeometry = new THREE.PlaneGeometry(1, 1);
           const planeMaterial = new THREE.MeshBasicMaterial({ 
@@ -177,7 +292,7 @@ document.addEventListener("DOMContentLoaded", () => {
             videoPlane.scale.set(videoAspect, 1, 1);
           }
           
-          videoPlane.position.z = 0.1; // Plane'i video arkasına konumlandır
+          //videoPlane.position.z = 0.1; // Plane'i video arkasına konumlandır
           viewScene.add(videoPlane);
           
           // Videoyu oynat
@@ -203,9 +318,14 @@ document.addEventListener("DOMContentLoaded", () => {
   
   // View Canvas için Three.js sahnesini kur
   const setupViewCanvas = (canvas) => {
-    // Canvas boyutlarını ayarla
-    canvas.width = 600;
-    canvas.height = 600;
+    // Parent container'ın boyutlarını al
+    const container = document.querySelector('.view-canvas-container');
+    const containerWidth = container.clientWidth;
+    const containerHeight = container.clientHeight;
+    
+    // Canvas boyutlarını container'a göre ayarla
+    canvas.width = containerWidth;
+    canvas.height = containerHeight;
     
     // Sahne, kamera ve renderer oluştur
     viewScene = new THREE.Scene();
@@ -238,6 +358,20 @@ document.addEventListener("DOMContentLoaded", () => {
     // Işık ekle
     const ambientLight = new THREE.AmbientLight(0xffffff, 1);
     viewScene.add(ambientLight);
+    
+    // Pencere boyutu değiştiğinde canvas'ı yeniden boyutlandır
+    window.addEventListener('resize', () => {
+      const containerWidth = container.clientWidth;
+      const containerHeight = container.clientHeight;
+      
+      canvas.width = containerWidth;
+      canvas.height = containerHeight;
+      
+      viewCamera.aspect = containerWidth / containerHeight;
+      viewCamera.updateProjectionMatrix();
+      
+      viewRenderer.setSize(containerWidth, containerHeight);
+    });
     
     // Animation loop ekle (OrbitControls için)
     const animate = () => {
@@ -387,6 +521,8 @@ document.addEventListener("DOMContentLoaded", () => {
       // Eğer dosya seçilmediyse null döndür
       return null;
     }
+    
+    // Normal dosya için URL oluştur
     return URL.createObjectURL(file);
   };
 
@@ -424,9 +560,13 @@ document.addEventListener("DOMContentLoaded", () => {
       // Resmi yükle
       const image = await loadImage(imageFile);
       
-      // Modeli yükle (eğer seçilmişse)
-      const modelUrl = await loadModel(modelFile);
+      // Kullanıcının yüklediği modeli yükle (eğer seçilmişse)
+      let modelUrl = null;
+      if (modelFile) {
+        modelUrl = await loadModel(modelFile);
+      }
       
+      // Video yükle (eğer seçilmişse)
       const videoUrl = await loadVideo(videoFile);
 
       // Resmi derle
@@ -444,7 +584,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const mindUrl = URL.createObjectURL(mindBlob);
 
       // AR'ı başlat
-      await startAR(mindUrl, modelUrl, videoUrl);
+      await startAR(mindUrl, modelUrl, videoUrl, socialMediaIconFile);
 
       // Yükleme ekranını gizle ve AR container'ı göster
       uploadContainer.style.display = "none";
@@ -461,7 +601,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  const startAR = async (mindTargetSource, modelSource, videoElement) => {
+  const startAR = async (mindTargetSource, modelSource, videoElement, socialMediaIconFile) => {
     try {
       // Kamera API'sinin varlığını kontrol et
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -515,20 +655,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
       directionalLight.position.set(0, 1, 1);
       scene.add(directionalLight);
-
-      // Platform (Cylinder)
-      const platformGeometry = new THREE.CylinderGeometry(0.5, 0.5, 0.05, 32);
-      const platformMaterial = new THREE.MeshBasicMaterial({
-        color: 0x1b2a47,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.8,
-      });
-      const platformMesh = new THREE.Mesh(platformGeometry, platformMaterial);
-
-      platformMesh.scale.set(0.5, 0.5, 0.5);
-      platformMesh.position.set(0, 0, 0);
-      platformMesh.rotation.y = Math.PI / 2;
 
       // Model
       let model_mixer;
@@ -616,6 +742,35 @@ document.addEventListener("DOMContentLoaded", () => {
       // Video plane'i ekle (eğer oluşturulduysa)
       if (videoPlane) {
         anchor.group.add(videoPlane);
+      }
+
+      // Sosyal medya ikonu ekle (eğer varsa)
+      if (socialMediaIconFile) {
+        const loader = new GLTFLoader();
+        const socialMediaIcon = await loader.loadAsync(socialMediaIconFile.url, (xhr) => {
+          if (xhr.lengthComputable) {
+            const yuzde = Math.round((xhr.loaded / xhr.total) * 100);
+            console.log(`Sosyal medya ikonu yükleniyor: %${yuzde}`);
+          }
+        });
+        
+        // Sosyal medya ikonunun boyutunu ve konumunu ayarla
+        const iconScene = socialMediaIcon.scene;
+        
+        // Modelin boyutunu ayarla
+        const box = new THREE.Box3().setFromObject(iconScene);
+        const size = box.getSize(new THREE.Vector3());
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const scale = 0.5 / maxDim; // Modeli uygun boyuta ölçekle
+        
+        // Eğer model varsa, sosyal medya ikonunu modelin yanına yerleştir
+        if (model) {
+          //iconScene.position.set(0.5, 0, 0); // Modelin sağına yerleştir
+        } else {
+          iconScene.position.set(0, 0, 0); // Merkeze yerleştir
+        }
+        
+        anchor.group.add(iconScene);
       }
 
       anchor.onTargetFound = () => {
