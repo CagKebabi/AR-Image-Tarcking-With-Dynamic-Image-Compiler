@@ -16,7 +16,7 @@ let videoFile = null;
 let viewScene, viewCamera, viewRenderer;
 let viewTexture, viewPlane;
 let viewModel = null;
-let socialMediaIconFile = null;
+let selectedSocialMediaIcons = [];
 
 document.addEventListener("DOMContentLoaded", () => {
   // DOM elementlerini seç
@@ -28,7 +28,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const progressBar = document.getElementById("progressBar");
   const progressText = document.getElementById("progressText");
   const viewCanvas = document.getElementById("viewCanvas");
-  const socialMediaIconSelect = document.getElementById("socialMediaIconSelect");
+  const socialMediaIconsGrid = document.getElementById("socialMediaIconsGrid");
+  const selectAllIconsBtn = document.getElementById("selectAllIcons");
+  const clearSelectedIconsBtn = document.getElementById("clearSelectedIcons");
 
   // Sosyal medya ikonları için modellerin yollarını ve isimlerini tanımla
   const socialMediaIcons = [
@@ -64,85 +66,217 @@ document.addEventListener("DOMContentLoaded", () => {
     { name: "YouTube", file: "YoutubeLogo2.glb" }
   ];
 
-  // Sosyal medya ikonları seçme kutusunu doldur
-  const populateSocialMediaIconsDropdown = () => {
+  // Sosyal medya ikonlarını grid olarak doldur
+  const populateSocialMediaIconsGrid = () => {
     socialMediaIcons.forEach(icon => {
-      const option = document.createElement("option");
-      option.value = icon.file;
-      option.textContent = icon.name;
-      socialMediaIconSelect.appendChild(option);
+      // Her ikon için bir container oluştur
+      const iconItem = document.createElement("div");
+      iconItem.className = "social-media-icon-item";
+      iconItem.dataset.file = icon.file;
+      iconItem.dataset.name = icon.name;
+      
+      // İkon görseli için placeholder
+      const iconImg = document.createElement("div");
+      iconImg.className = "social-media-icon-img";
+      iconImg.style.backgroundColor = "#f0f0f0";
+      iconImg.style.borderRadius = "5px";
+      
+      // İkon adı
+      const iconName = document.createElement("div");
+      iconName.className = "social-media-icon-name";
+      iconName.textContent = icon.name;
+      
+      // Elementleri birleştir
+      iconItem.appendChild(iconImg);
+      iconItem.appendChild(iconName);
+      
+      // Tıklama olayı ekle
+      iconItem.addEventListener("click", () => {
+        toggleSocialMediaIcon(iconItem, icon);
+      });
+      
+      // Grid'e ekle
+      socialMediaIconsGrid.appendChild(iconItem);
+      
+      // İkon görselini yükle (önizleme için)
+      loadSocialMediaIconPreview(iconImg, icon.file);
     });
   };
-
-  // Sosyal medya ikonu seçildiğinde çalışacak fonksiyon
-  const loadSocialMediaIcon = async (iconFileName) => {
-    if (!iconFileName) return;
+  
+  // Sosyal medya ikonu önizleme görselini yükle
+  const loadSocialMediaIconPreview = (imgElement, iconFileName) => {
+    const iconUrl = `./assets/social-media-icons/${iconFileName}`;
     
+    // GLTFLoader ile modeli yükle ve önizleme oluştur
+    const loader = new GLTFLoader();
+    loader.load(iconUrl, (gltf) => {
+      // Canvas oluştur ve modeli render et
+      const canvas = document.createElement("canvas");
+      canvas.width = 64;
+      canvas.height = 64;
+      
+      const renderer = new THREE.WebGLRenderer({
+        canvas: canvas,
+        alpha: true,
+        antialias: true
+      });
+      
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+      camera.position.z = 1.5;
+      
+      const ambientLight = new THREE.AmbientLight(0xffffff, 2);
+      scene.add(ambientLight);
+      
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+      directionalLight.position.set(0, 1, 1);
+      scene.add(directionalLight);
+      
+      const model = gltf.scene;
+      scene.add(model);
+      
+      // Modeli uygun boyuta getir
+      const box = new THREE.Box3().setFromObject(model);
+      const size = box.getSize(new THREE.Vector3());
+      const maxDim = Math.max(size.x, size.y, size.z);
+      const scale = 1 / maxDim;
+      model.scale.set(scale, scale, scale);
+      
+      // Modeli ortala
+      box.setFromObject(model);
+      const center = box.getCenter(new THREE.Vector3());
+      model.position.sub(center);
+      
+      // Modeli döndür
+      model.rotation.y = Math.PI / 4;
+      
+      // Render et
+      renderer.render(scene, camera);
+      
+      // Canvas içeriğini img elementine aktar
+      imgElement.style.backgroundImage = `url(${canvas.toDataURL()})`;
+      imgElement.style.backgroundSize = "contain";
+      imgElement.style.backgroundPosition = "center";
+      imgElement.style.backgroundRepeat = "no-repeat";
+    });
+  };
+  
+  // Sosyal medya ikonu seçimini değiştir
+  const toggleSocialMediaIcon = (iconElement, icon) => {
+    // Seçim durumunu değiştir
+    iconElement.classList.toggle("selected");
+    
+    // Seçili ikonlar listesini güncelle
+    if (iconElement.classList.contains("selected")) {
+      // İkonu seçili listeye ekle
+      selectedSocialMediaIcons.push({
+        name: icon.name,
+        file: icon.file,
+        url: `./assets/social-media-icons/${icon.file}`
+      });
+    } else {
+      // İkonu seçili listeden çıkar
+      selectedSocialMediaIcons = selectedSocialMediaIcons.filter(item => item.file !== icon.file);
+    }
+    
+    // Seçili ikonları view canvas'ta göster
+    displaySelectedSocialMediaIcons();
+  };
+
+  // Seçili sosyal medya ikonlarını view canvas'ta göster
+  const displaySelectedSocialMediaIcons = async () => {
     try {
-      // Eğer önceki bir sosyal medya ikonu varsa, kaldır
-      const existingSocialMediaIcon = viewScene.children.find(child => child.userData && child.userData.isSocialMediaIcon);
-      if (existingSocialMediaIcon) {
-        viewScene.remove(existingSocialMediaIcon);
+      // Önceki sosyal medya ikonlarını kaldır
+      const existingSocialMediaIcons = viewScene.children.filter(child => child.userData && child.userData.isSocialMediaIcon);
+      existingSocialMediaIcons.forEach(icon => {
+        viewScene.remove(icon);
+      });
+      
+      // Seçili ikon yoksa işlemi sonlandır
+      if (selectedSocialMediaIcons.length === 0) {
+        renderViewCanvas();
+        return;
       }
       
-      // Sosyal medya ikonu için URL oluştur
-      const iconUrl = `./assets/social-media-icons/${iconFileName}`;
+      // Her seçili ikonu yükle ve göster
+      const iconSpacing = 0.5; // İkonlar arası mesafe
+      const startPosition = -((selectedSocialMediaIcons.length - 1) * iconSpacing) / 2; // Merkezi hizalama için başlangıç pozisyonu
       
-      // Seçilen sosyal medya ikonunu kaydet (AR deneyiminde kullanmak için)
-      socialMediaIconFile = { name: iconFileName, url: iconUrl };
+      for (let i = 0; i < selectedSocialMediaIcons.length; i++) {
+        const icon = selectedSocialMediaIcons[i];
+        const loader = new GLTFLoader();
+        
+        // Promise ile yükleme işlemini bekle
+        await new Promise((resolve, reject) => {
+          loader.load(icon.url, (gltf) => {
+            // Modeli hazırla
+            const socialMediaIcon = gltf.scene;
+            socialMediaIcon.userData.isSocialMediaIcon = true; // Daha sonra referans için işaretle
+            socialMediaIcon.userData.iconFile = icon.file; // Hangi ikon olduğunu kaydet
+            
+            // Modelin boyutunu ayarla
+            const box = new THREE.Box3().setFromObject(socialMediaIcon);
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const scale = 0.3 / maxDim; // Modeli uygun boyuta ölçekle
+            
+            socialMediaIcon.scale.set(scale, scale, scale);
+            
+            // İkonu konumlandır (x ekseninde yan yana)
+            const xPosition = startPosition + (i * iconSpacing);
+            socialMediaIcon.position.set(xPosition, 0, 0);
+            
+            // Modeli sahneye ekle
+            viewScene.add(socialMediaIcon);
+            
+            resolve();
+          }, undefined, reject);
+        });
+      }
       
-      // GLTFLoader ile modeli yükle
-      const loader = new GLTFLoader();
-      loader.load(iconUrl, (gltf) => {
-        // Modeli hazırla
-        const socialMediaIcon = gltf.scene;
-        socialMediaIcon.userData.isSocialMediaIcon = true; // Daha sonra referans için işaretle
-        
-        // Modelin boyutunu ayarla
-        const box = new THREE.Box3().setFromObject(socialMediaIcon);
-        const size = box.getSize(new THREE.Vector3());
-        const maxDim = Math.max(size.x, size.y, size.z);
-        const scale = 0.5 / maxDim; // Modeli uygun boyuta ölçekle
-        
-        //socialMediaIcon.scale.set(scale, scale, scale);
-        
-        // Eğer kullanıcı yüklediği bir model varsa, sosyal medya ikonunu onun yanına yerleştir
-        const existingUserModel = viewScene.children.find(child => child.userData && child.userData.isUserModel);
-        if (existingUserModel) {
-          socialMediaIcon.position.set(0.5, 0, 0); // Modelin sağına yerleştir
-        } else {
-          socialMediaIcon.position.set(0, 0, 0); // Merkeze yerleştir
-        }
-        
-        // Modeli sahneye ekle
-        viewScene.add(socialMediaIcon);
-        
-        // Sahneyi render et
-        renderViewCanvas();
-      }, 
-      // Progress callback
-      (xhr) => {
-        console.log(`Sosyal medya ikonu yükleniyor: ${(xhr.loaded / xhr.total * 100).toFixed(2)}%`);
-      }, 
-      // Error callback
-      (error) => {
-        console.error('Sosyal medya ikonu yüklenirken hata oluştu:', error);
-      });
+      // Sahneyi render et
+      renderViewCanvas();
     } catch (error) {
-      console.error("Sosyal medya ikonu görüntülenirken hata oluştu:", error);
+      console.error("Sosyal medya ikonları görüntülenirken hata oluştu:", error);
     }
   };
 
-  // Sosyal medya ikonu seçme kutusuna change event listener ekle
-  socialMediaIconSelect.addEventListener("change", (event) => {
-    const selectedIcon = event.target.value;
-    if (selectedIcon) {
-      loadSocialMediaIcon(selectedIcon);
-    }
+  // Tümünü seç butonuna tıklama olayı ekle
+  selectAllIconsBtn.addEventListener("click", () => {
+    const iconItems = socialMediaIconsGrid.querySelectorAll(".social-media-icon-item");
+    selectedSocialMediaIcons = [];
+    
+    iconItems.forEach(item => {
+      item.classList.add("selected");
+      
+      // İkonu seçili listeye ekle
+      selectedSocialMediaIcons.push({
+        name: item.dataset.name,
+        file: item.dataset.file,
+        url: `./assets/social-media-icons/${item.dataset.file}`
+      });
+    });
+    
+    // Seçili ikonları view canvas'ta göster
+    displaySelectedSocialMediaIcons();
+  });
+  
+  // Seçimi temizle butonuna tıklama olayı ekle
+  clearSelectedIconsBtn.addEventListener("click", () => {
+    const iconItems = socialMediaIconsGrid.querySelectorAll(".social-media-icon-item");
+    
+    iconItems.forEach(item => {
+      item.classList.remove("selected");
+    });
+    
+    selectedSocialMediaIcons = [];
+    
+    // Seçili ikonları view canvas'tan kaldır
+    displaySelectedSocialMediaIcons();
   });
 
-  // Sosyal medya ikonları seçme kutusunu doldur
-  populateSocialMediaIconsDropdown();
+  // Sosyal medya ikonları grid'ini doldur
+  populateSocialMediaIconsGrid();
 
   // Resmi view canvas'ta göster
   const displayImageInViewCanvas = async (file) => {
@@ -584,7 +718,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const mindUrl = URL.createObjectURL(mindBlob);
 
       // AR'ı başlat
-      await startAR(mindUrl, modelUrl, videoUrl, socialMediaIconFile);
+      await startAR(mindUrl, modelUrl, videoUrl);
 
       // Yükleme ekranını gizle ve AR container'ı göster
       uploadContainer.style.display = "none";
@@ -601,7 +735,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  const startAR = async (mindTargetSource, modelSource, videoElement, socialMediaIconFile) => {
+  const startAR = async (mindTargetSource, modelSource, videoElement) => {
     try {
       // Kamera API'sinin varlığını kontrol et
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -744,33 +878,38 @@ document.addEventListener("DOMContentLoaded", () => {
         anchor.group.add(videoPlane);
       }
 
-      // Sosyal medya ikonu ekle (eğer varsa)
-      if (socialMediaIconFile) {
-        const loader = new GLTFLoader();
-        const socialMediaIcon = await loader.loadAsync(socialMediaIconFile.url, (xhr) => {
-          if (xhr.lengthComputable) {
-            const yuzde = Math.round((xhr.loaded / xhr.total) * 100);
-            console.log(`Sosyal medya ikonu yükleniyor: %${yuzde}`);
-          }
-        });
+      // Seçili sosyal medya ikonlarını ekle
+      if (selectedSocialMediaIcons.length > 0) {
+        const iconSpacing = 0.5; // İkonlar arası mesafe
+        const startPosition = -((selectedSocialMediaIcons.length - 1) * iconSpacing) / 2; // Merkezi hizalama için başlangıç pozisyonu
         
-        // Sosyal medya ikonunun boyutunu ve konumunu ayarla
-        const iconScene = socialMediaIcon.scene;
-        
-        // Modelin boyutunu ayarla
-        const box = new THREE.Box3().setFromObject(iconScene);
-        const size = box.getSize(new THREE.Vector3());
-        const maxDim = Math.max(size.x, size.y, size.z);
-        const scale = 0.5 / maxDim; // Modeli uygun boyuta ölçekle
-        
-        // Eğer model varsa, sosyal medya ikonunu modelin yanına yerleştir
-        if (model) {
-          //iconScene.position.set(0.5, 0, 0); // Modelin sağına yerleştir
-        } else {
-          iconScene.position.set(0, 0, 0); // Merkeze yerleştir
+        for (let i = 0; i < selectedSocialMediaIcons.length; i++) {
+          const icon = selectedSocialMediaIcons[i];
+          const loader = new GLTFLoader();
+          const socialMediaIcon = await loader.loadAsync(icon.url, (xhr) => {
+            if (xhr.lengthComputable) {
+              const yuzde = Math.round((xhr.loaded / xhr.total) * 100);
+              console.log(`Sosyal medya ikonu yükleniyor (${icon.name}): %${yuzde}`);
+            }
+          });
+          
+          // Sosyal medya ikonunun boyutunu ve konumunu ayarla
+          const iconScene = socialMediaIcon.scene;
+          
+          // Modelin boyutunu ayarla
+          const box = new THREE.Box3().setFromObject(iconScene);
+          const size = box.getSize(new THREE.Vector3());
+          const maxDim = Math.max(size.x, size.y, size.z);
+          const scale = 0.3 / maxDim; // Modeli uygun boyuta ölçekle
+          
+          iconScene.scale.set(scale, scale, scale);
+          
+          // İkonu konumlandır (x ekseninde yan yana)
+          const xPosition = startPosition + (i * iconSpacing);
+          iconScene.position.set(xPosition, 0, 0);
+          
+          anchor.group.add(iconScene);
         }
-        
-        anchor.group.add(iconScene);
       }
 
       anchor.onTargetFound = () => {
